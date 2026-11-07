@@ -1,3 +1,5 @@
+//@ pragma IconTheme Rice
+// тема значков своя, а не из qtengine: не загрузился он — Qt ищет только в hicolor, и у kcalc и т.п. пустые круги (#11)
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -44,10 +46,13 @@ ShellRoot {
             id: s
             required property var modelData
             Back { screen: s.modelData }
-            Home { screen: s.modelData }
+            // бар и дом можно снять с экрана (настройки → display), обои остаются. Здесь, а не в окне: visible от своего
+            // screen — петля (окно пересоздаётся, screen меняется)
+            Home { screen: s.modelData; visible: Theme.scr(s.modelData.name, "home") }
             Hot { screen: s.modelData; onTriggered: quick.peek() }
             Bar {
                 screen: s.modelData
+                visible: Theme.scr(s.modelData.name, "bar")
                 onMarkClicked: launcher.toggle()
                 onTrayClicked: quick.toggle()
                 onPowerClicked: power.visible ? power.close() : power.open()
@@ -60,6 +65,7 @@ ShellRoot {
     // движение, ночник и hypridle; сверху Theme.apply — свои цвета рамок, скругление и kitty. Его же зовём при смене темы
     Component.onCompleted: {
         hypr();
+        if (Theme.state.paint) Theme.apps(); // rice start ставит ссылки на term/ — цвет надо вернуть
         Rules.night();
         Rules.idle();
     }
@@ -76,18 +82,42 @@ ShellRoot {
         target: Hyprland
         function onRawEvent(e) { if (e.name === "configreloaded") shell.hypr(); }
     }
+    // подключили экран — его масштаб и герцы из prefs → display (Rules.store.outs)
+    Connections {
+        target: Quickshell
+        function onScreensChanged() { Rules.monitor(true); }
+    }
     Connections {
         target: Theme
-        function onLightChanged() { Theme.apply(); }
+        function onGreysChanged() { paint.restart(); }
+    }
+    // сменились тема или цвет (style, новые обои) — окна, kitty, gtk и qt. Через 300 мс: тона новых обоев приходят не сразу,
+    // а gtk не стоит дёргать дважды
+    Timer { id: paint; interval: 300; onTriggered: { Theme.apply(); Theme.apps(); } }
+    // тона обоев (Theme.pick) — здесь, не в Theme: его грузит и лок, ему хватает готовых из glyph.json. Пусто — копия обоев не
+    // загрузилась (серые дают 16 цветов): старые тона остаются. Новые обои — с первого тона
+    ColorQuantizer {
+        source: Theme.url(Theme.wallSrc(Theme.wall))
+        depth: 4
+        rescaleSize: 64
+        onColorsChanged: {
+            if (!colors.length) return;
+            const t = Theme.pick(colors);
+            if (t.join() === Theme.state.tones.join()) return;
+            Theme.state.tones = t;
+            Theme.state.paintAt = 0;
+        }
     }
     Connections {
         target: Theme.state
         function onRoundingChanged() { Theme.apply(); }
     }
-    // режим ultra включает/снимает blur и тени поверх настроек — окна перекрасить (герцы и движение ставит сам Rules.setMode)
+    // режим ultra включает/снимает blur и тени поверх настроек — окна перекрасить (герцы и движение ставит сам Rules.setMode).
+    // Игровой — то же и ещё анимации
     Connections {
         target: Rules.store
         function onUltraChanged() { Theme.apply(); }
+        function onGameChanged() { Rules.motion(); Theme.apply(); }
     }
 
     // тап Super — лаунчер на отпускании; любой Super+<key> по пути шлёт interrupt, и лаунчер не открывается
@@ -113,6 +143,7 @@ ShellRoot {
     Shortcut { name: "clip"; description: "буфер обмена"; onPressed: clip.toggle() }
     Shortcut { name: "charms"; description: "эмодзи, каомодзи, символы"; onPressed: charms.toggle() }
     Shortcut { name: "wall"; description: "обои"; onPressed: walls.toggle() }
+    Shortcut { name: "game"; description: "игровой режим"; onPressed: Rules.store.game = !Rules.store.game }
 
     component Shortcut: GlobalShortcut { appid: "shell" }
 }

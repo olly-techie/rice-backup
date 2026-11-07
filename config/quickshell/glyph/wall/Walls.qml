@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import qs
@@ -62,10 +63,16 @@ PanelWindow {
     Behavior on t { NumberAnimation { duration: Theme.t; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.glide } }
     Binding { target: Sys; property: "wallOpen"; value: root.visible }
 
+    // экранов несколько — обои на все (общие; свои у экранов снимаются) или только на этот, где открыт пикер
+    property string mon: ""
+    property bool own: false
     function open() {
         const s = Theme.state;
-        pick = s.wall;
-        view = s.wall;
+        mon = Hyprland.focusedMonitor?.name ?? "";
+        // "" — своё «без обоев». Экран один (второй отключили) — переключателя нет, обои общие, и своё «all» снимет
+        own = Quickshell.screens.length > 1 && Theme.own(mon)?.wall !== undefined;
+        pick = Theme.scr(mon, "wall");
+        view = pick;
         look = s.wallLook;
         pitch = s.wallPitch;
         bright = s.wallBright;
@@ -80,7 +87,11 @@ PanelWindow {
     function toggle() { shown ? close() : open(); }
     function apply() {
         const s = Theme.state;
-        s.wall = pick;
+        if (own) Theme.setScr(mon, "wall", pick);
+        else {
+            s.wall = pick;
+            for (const n in s.screens) if (s.screens[n].wall !== undefined) Theme.setScr(n, "wall", undefined);
+        }
         s.wallLook = look;
         s.wallPitch = pitch;
         s.wallBright = bright;
@@ -208,6 +219,7 @@ PanelWindow {
             anchors { right: parent.right; rightMargin: 150 - 30 * (1 - root.t) }
             y: 110
             spacing: 30
+            Pick { visible: Quickshell.screens.length > 1; anchors.right: parent.right; label: "for"; opts: ["all", root.mon.toLowerCase()]; cur: root.own ? 1 : 0; onPicked: i => root.own = i === 1 }
             Pick { label: "look"; opts: root.looks; cur: root.look; onPicked: i => root.look = i }
             Row {
                 anchors.right: parent.right
@@ -258,12 +270,12 @@ PanelWindow {
                 }
                 // живые сейчас
                 Rectangle {
-                    visible: th.modelData === Theme.state.wall
+                    visible: th.modelData === Theme.scr(root.mon, "wall")
                     anchors { horizontalCenter: parent.horizontalCenter; top: parent.bottom; topMargin: th.index === root.sel ? 36 : 22 }
                     width: 10
                     height: 10
                     radius: 5
-                    color: Theme.red
+                    color: Theme.accent
                 }
                 TapHandler {
                     onTapped: {

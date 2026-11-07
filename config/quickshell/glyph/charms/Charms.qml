@@ -14,10 +14,13 @@ PanelWindow {
     readonly property var cols: [2, 8, 8]
     property int tab: 0
     property int sel: 0
-    readonly property string query: input.text.toLowerCase()
+    // ё → е: в словах CLDR «черный», а пишут и так и так
+    readonly property string query: input.text.toLowerCase().replace(/ё/g, "е")
 
-    readonly property var view: [Data.KAOMOJI, Data.EMOJI, Data.SYMBOLS][tab]
-        .filter(([t, k]) => `${k} ${t}`.toLowerCase().includes(query))
+    readonly property var lists: [Data.KAOMOJI, Data.EMOJI, Data.SYMBOLS]
+    // слова в charms.js уже строчные — без toLowerCase и деструктуризации: по 1900 эмодзи это кадр на каждую букву.
+    // Сам символ («Ω», «Ψ») — строчными, но только если слова не совпали
+    readonly property var view: query ? lists[tab].filter(e => e[1].includes(query) || e[0].toLowerCase().includes(query)) : lists[tab]
     readonly property var cur: view[sel] ?? null
 
     property bool shown: false
@@ -40,8 +43,8 @@ PanelWindow {
     }
 
     onQueryChanged: sel = 0
-    onTabChanged: sel = 0
-    onSelChanged: grid.positionViewAtIndex(sel, GridView.Contain)
+    onTabChanged: { sel = 0; grids.itemAt(tab)?.positionViewAtBeginning(); }
+    onSelChanged: grids.itemAt(tab)?.positionViewAtIndex(sel, GridView.Contain)
     onVisibleChanged: if (visible) input.forceActiveFocus()
 
     visible: t > 0
@@ -69,7 +72,7 @@ PanelWindow {
             width: 1120
             height: Math.min(stage.height - 280, 760)
             opacity: root.t
-            radius: 44
+            radius: Theme.corner(44)
             color: Theme.s1
             border { width: 1; color: Theme.s2 }
             MouseArea { anchors.fill: parent }
@@ -80,7 +83,7 @@ PanelWindow {
                 y: 30
                 width: parent.width - 68
                 height: 66
-                radius: 33
+                radius: Theme.corner(33)
                 color: Theme.s2
 
                 Icon { id: lens; x: 24; anchors.verticalCenter: parent.verticalCenter; text: "\u{F0349}"; color: Theme.grey; font.pixelSize: 22 }
@@ -94,7 +97,7 @@ PanelWindow {
                     clip: true
                     cursorDelegate: Rectangle {
                         width: 2
-                        color: Theme.red
+                        color: Theme.accent
                         Timer { running: input.activeFocus; interval: 500; repeat: true; onTriggered: parent.opacity = 1 - parent.opacity }
                     }
                     Text {
@@ -148,42 +151,58 @@ PanelWindow {
                 Lb { id: hlab; text: root.tabs[root.tab] }
             }
 
-            GridView {
+            // по сетке на вкладку, живут все три: Tab только прячет — пересборка плиток стоила кадры. Без запроса у всех
+            // полный список и от tab модели не зависят; поиск фильтрует только видимую
+            Item {
                 id: grid
                 anchors { left: parent.left; leftMargin: 34; top: head.bottom; topMargin: 18; bottom: parent.bottom; bottomMargin: 34 }
                 width: 620
-                clip: true
-                cellWidth: width / root.cols[root.tab]
-                cellHeight: root.tab === 0 ? 76 : cellWidth
-                model: root.view
-                boundsBehavior: Flickable.StopAtBounds
-                delegate: Item {
-                    id: d
-                    required property var modelData
-                    required property int index
-                    readonly property bool on: root.sel === index
-                    width: grid.cellWidth
-                    height: grid.cellHeight
 
-                    Rectangle {
-                        anchors { fill: parent; margins: 3 }
-                        radius: Math.min(width, height) / 2
-                        color: d.on ? Theme.fg : Theme.s2
-                        Text {
-                            anchors { fill: parent; margins: 8 }
-                            text: d.modelData[0]
-                            textFormat: Text.PlainText
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            fontSizeMode: Text.Fit
-                            minimumPixelSize: 6
-                            font { family: Theme.mono; pixelSize: root.tab === 0 ? 20 : 32 }
-                            color: d.on ? Theme.ink : Theme.fg
+                Repeater {
+                    id: grids
+                    model: 3
+
+                    GridView {
+                        id: g
+                        required property int index
+                        anchors.fill: parent
+                        visible: root.tab === index
+                        clip: true
+                        cellWidth: width / root.cols[index]
+                        cellHeight: index === 0 ? 76 : cellWidth
+                        model: root.query && root.tab === index ? root.view : root.lists[index]
+                        boundsBehavior: Flickable.StopAtBounds
+                        delegate: Item {
+                            id: d
+                            required property var modelData
+                            required property int index
+                            readonly property bool on: root.sel === index
+                            width: g.cellWidth
+                            height: g.cellHeight
+
+                            Rectangle {
+                                anchors { fill: parent; margins: 3 }
+                                radius: Math.min(width, height) / 2
+                                color: d.on ? Theme.fg : Theme.s2
+                                // Fit — лишние раскладки на каждой плитке; нужен длинным каомодзи и ZWJ-эмодзи: шрифт постарше
+                                // не склеит последовательность, и она развалится на 2–4 глифа шире клетки
+                                Text {
+                                    anchors { fill: parent; margins: 8 }
+                                    text: d.modelData[0]
+                                    textFormat: Text.PlainText
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    fontSizeMode: g.index === 0 || d.modelData[0].includes("\u200d") ? Text.Fit : Text.FixedSize
+                                    minimumPixelSize: 6
+                                    font { family: Theme.mono; pixelSize: g.index === 0 ? 20 : 32 }
+                                    color: d.on ? Theme.ink : Theme.fg
+                                }
+                            }
+                            // клик — выбрать, по выбранной — скопировать
+                            TapHandler { onTapped: d.on ? root.fire() : root.sel = d.index }
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                         }
                     }
-                    // клик — выбрать, по выбранной — скопировать
-                    TapHandler { onTapped: d.on ? root.fire() : root.sel = d.index }
-                    HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
             }
 
@@ -191,7 +210,7 @@ PanelWindow {
             Rectangle {
                 id: card
                 anchors { left: grid.right; leftMargin: 24; right: parent.right; rightMargin: 34; top: head.top; bottom: parent.bottom; bottomMargin: 34 }
-                radius: 40
+                radius: Theme.corner(40)
                 color: Theme.s2
 
                 Lb { id: kindLb; x: 30; y: 30; text: root.cur ? `${root.sel + 1} of ${root.view.length}` : "" }

@@ -36,7 +36,7 @@ hl.window_rule({ match = { tag = "float" }, float = true })
 hl.window_rule({
     match = {
         class =
-        "ghostty|equibop|org.quickshell|imv|swappy|krita|gimp|inkscape|darktable|resolve|kdenlive|shotcut|blender|godot|(steam_app_(default|[0-9]+))|gamescope",
+        "ghostty|equibop|org.quickshell|com.t3tools.T3Code|imv|swappy|krita|gimp|inkscape|darktable|resolve|kdenlive|shotcut|blender|godot|(steam_app_(default|[0-9]+))|gamescope",
     },
     tag   = "+opaque_app",
 })
@@ -115,14 +115,7 @@ hl.window_rule({
 })
 hl.window_rule({ match = { initial_title = "Spotify( \\(?Free\\)?)?" }, workspace = "special:music" }) -- Spotify wayland, it has no class for some reason; regex (re2), не lua-паттерн
 hl.window_rule({ match = { class = "discord|equibop|vesktop|whatsapp|org\\.telegram\\.desktop|TelegramDesktop" }, workspace = "special:communication" })
-hl.window_rule({ match = { class = "Todoist" }, workspace = "special:todo" })
-
--------------------------
----- Workspace rules ----
--------------------------
-
-hl.workspace_rule({ workspace = "w[tv1]s[false]", gaps_out = vars.singleWindowGapsOut })
-hl.workspace_rule({ workspace = "f[1]s[false]", gaps_out = vars.singleWindowGapsOut })
+hl.window_rule({ match = { class = "Todoist|io\\.github\\.alainm23\\.planify" }, workspace = "special:todo" })
 
 ---------------------
 ---- Layer rules ----
@@ -137,6 +130,6 @@ hl.layer_rule({ match = { namespace = "launcher" }, animation = "popin 80%", blu
 -- Shell: все окна demonshot анимируют себя сами (slam), компоновщик не мешает
 hl.layer_rule({ match = { namespace = "demonshot-.*" }, no_anim = true })
 -- glyph: полосы-OSD, остров, быстрые настройки и свои модули рисуют появление сами — компоновщик не мешает (и не тормозит OSD);
--- лаунчеру и меню питания своей анимации нет — мягкий fade
-hl.layer_rule({ match = { namespace = "glyph-(launcher|power)" }, animation = "fade" })
-hl.layer_rule({ match = { namespace = "glyph-(edge|island|buds|quick|home|bar|caffeine|shot|clip|vpn|deck|prefs|hot|cal|wall|back)" }, no_anim = true })
+-- меню питания своей анимации нет — мягкий fade
+hl.layer_rule({ match = { namespace = "glyph-power" }, animation = "fade" })
+hl.layer_rule({ match = { namespace = "glyph-(launcher|edge|island|buds|quick|home|bar|caffeine|shot|clip|charms|vpn|deck|prefs|hot|cal|wall|back)" }, no_anim = true })

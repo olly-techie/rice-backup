@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 import Quickshell.Services.UPower
 import Quickshell.Wayland
@@ -12,6 +13,9 @@ import qs.components
 // снизу — прогресс долгих задач (уведомления с hint value) или фокус-таймера (Focus). Гаснут через 3 с
 Scope {
     id: root
+
+    // вспышка и остров — под баром, если он сверху и есть на экране в фокусе (там они и встают)
+    readonly property bool underBar: Theme.state.barAt === "top" && Theme.scr(Hyprland.focusedMonitor?.name, "bar")
 
     // ---- справа: громкость и яркость ----
     property string kind: "vol"
@@ -100,6 +104,7 @@ Scope {
         id: top
         shown: !!root.note && Theme.state.edges
         anchors.top: true
+        margins.top: root.underBar ? Math.ceil(78 * Theme.s) : 0
         implicitWidth: Math.ceil(640 * Theme.s)
         implicitHeight: Math.ceil(30 * Theme.s)
         Seg {
@@ -128,6 +133,7 @@ Scope {
     PanelWindow {
         visible: stack.count > 0
         anchors.top: true
+        margins.top: root.underBar ? Math.ceil(78 * Theme.s) : 0
         implicitWidth: Math.ceil(600 * Theme.s)
         implicitHeight: Math.ceil((24 + root.most * 132) * Theme.s)
         exclusionMode: ExclusionMode.Ignore
@@ -178,7 +184,7 @@ Scope {
                             x: (600 - width) / 2
                             y: -24 * (1 - c.drop)
                             opacity: c.drop
-                            radius: Math.min(34, height / 2)
+                            radius: Theme.corner(Math.min(34, height / 2))
                             clip: true
                             color: Theme.s1
                             border { width: 1; color: c.crit ? Theme.red : Theme.fg }
@@ -220,6 +226,7 @@ Scope {
                                         topPadding: 2
                                         elide: Text.ElideRight
                                         text: c.summary
+                                        textFormat: Text.PlainText
                                         font { family: Theme.ui; pixelSize: 17; weight: Font.DemiBold }
                                         color: Theme.fg
                                     }
@@ -236,7 +243,7 @@ Scope {
                                     }
                                 }
                                 // красная точка — только у самой новой: красное на экране одно
-                                Rectangle { id: dot; visible: c.index === 0; anchors { right: parent.right; rightMargin: 22; verticalCenter: parent.verticalCenter } width: 12; height: 12; radius: 6; color: Theme.red }
+                                Rectangle { id: dot; visible: c.index === 0; anchors { right: parent.right; rightMargin: 22; verticalCenter: parent.verticalCenter } width: 12; height: 12; radius: 6; color: Theme.accent }
                             }
 
                             // клик — действие по умолчанию; плашка уходит, в истории остаётся. Уведомление могли уже закрыть —
@@ -324,7 +331,7 @@ Scope {
         property bool vertical
         width: vertical ? Math.max(52, box.width + 24) : box.width + 32
         height: vertical ? box.height + 36 : 52
-        radius: Math.min(width, height) / 2
+        radius: Theme.corner(Math.min(width, height) / 2)
         color: Theme.s1
         border { width: 1; color: Theme.s2 }
         Grid {

@@ -1,3 +1,6 @@
+# rice и прочее из install.sh лежит в ~/.local/bin, а Arch его в PATH не кладёт
+fish_add_path -g ~/.local/bin
+
 if status is-interactive
     # Starship custom prompt
     command -v starship &> /dev/null && starship init fish | source
@@ -8,6 +11,9 @@ if status is-interactive
 
     # Better ls
     command -v eza &> /dev/null && alias ls='eza --icons --group-directories-first -1'
+
+    # cava точками, как Glyph Matrix (~/.config/cava/dots); обычные столбики — command cava
+    command -v cava &> /dev/null && alias cava ~/.config/cava/dots
 
     # Abbrs
     abbr lg 'lazygit'

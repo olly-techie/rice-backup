@@ -19,8 +19,15 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Bottom
     WlrLayershell.namespace: "glyph-home"
 
-    readonly property bool home: (Hyprland.focusedWorkspace?.toplevels.values.length ?? 0) === 0
-    Binding { target: SysStats; property: "detailed"; value: root.home || Sys.deckOpen }
+    // дом виден, когда пуст воркспейс своего экрана, а не того, где фокус: работаешь на втором — дом первого живой
+    function idle(s) { return (Hyprland.monitorFor(s)?.activeWorkspace?.toplevels.values.length ?? 0) === 0; }
+    readonly property bool home: visible && idle(screen)
+    // значения — общие для всех домов (по экранам, где дом есть и виден): иначе Binding'и соседних домов перетирали бы друг
+    // друга. Не в делегате: уничтоженный Binding значение не возвращает — убрал виджет, а cava работала бы вечно.
+    // ponytail: cava — если стоит в списке, даже не влезшей в 3 × 3
+    readonly property var homes: Quickshell.screens.filter(s => Theme.scr(s.name, "home") && idle(s))
+    Binding { target: SysStats; property: "detailed"; value: root.homes.length > 0 || Sys.deckOpen }
+    Binding { target: Cava; property: "active"; value: root.homes.some(s => Theme.scr(s.name, "widgets").includes("cava")) }
 
     SystemClock { id: clock; precision: SystemClock.Minutes }
     readonly property var en: Qt.locale("en_US")
@@ -46,6 +53,8 @@ PanelWindow {
 
     Stage {
         id: stage
+        // раскладка под бар слева; бар сверху или снят с экрана — на его полширины влево, по центру
+        x: Theme.state.barAt === "top" || !Theme.scr(root.screen?.name, "bar") ? -39 * Theme.s : 0
 
         Row {
             x: 182
@@ -64,7 +73,7 @@ PanelWindow {
             x: 188
             y: 560
             textFormat: Text.StyledText
-            text: `${root.hello},<br><font color="${Theme.grey}">${Theme.state.name || Quickshell.env("USER")}.</font>`
+            text: `${root.hello},<br><font color="${Theme.grey}">${(Theme.state.name || Quickshell.env("USER")).replace(/&/g, "&amp;").replace(/</g, "&lt;")}.</font>`
             font { family: Theme.ui; pixelSize: 54; weight: Font.Light; letterSpacing: -1 }
             lineHeight: 1.1
             color: Theme.fg
@@ -78,29 +87,31 @@ PanelWindow {
             Meta { visible: !!root.buds; icon: "\u{F02CB}"; text: `${root.buds?.name ?? ""} · ${Math.round((root.buds?.battery ?? 0) * 100)}%` }
         }
 
-        // бенто: ячейки 220, зазор 20, сетка 3×3. Какие виджеты и в каком порядке — Theme.state.widgets (настройки), ширины —
-        // Theme.kinds. Кладём слева направо: не влез в ряд — со следующего, в три ряда не влез — не показывается.
+        // бенто: ячейки 220, зазор 20, сетка 3×3, правый край — в 80 от края экрана (на 1920 — с 1140, на широком — правее).
+        // Какие виджеты и в каком порядке — Theme.state.widgets (настройки; у экрана могут быть свои), ширины — Theme.kinds.
+        // Кладём слева направо: не влез в ряд — со следующего, в три ряда не влез — не показывается.
         // Квадрат со скруглением 40 или круг — других форм нет
         Repeater {
+            id: bento
             model: {
                 const out = [];
                 let r = 0, c = 0;
-                for (const id of Theme.state.widgets ?? []) {
+                for (const id of Theme.scr(root.screen?.name, "widgets") ?? []) {
                     const w = Theme.kinds[id];
                     if (!w) continue;
                     if (c + w > 3) { r++; c = 0; }
                     if (r > 2) break;
-                    out.push({ id, x: 1140 + c * 240, y: 150 + r * 240 });
+                    out.push({ id, x: c * 240, y: 150 + r * 240 });
                     c += w;
                 }
                 return out;
             }
             Loader {
                 required property var modelData
-                x: modelData.x
+                x: stage.width - 780 + modelData.x
                 y: modelData.y
                 sourceComponent: ({ weather: weatherW, calendar: calendarW, cpu: cpuW, ram: ramW, gpu: gpuW, disk: diskW,
-                                    battery: batteryW, buds: budsW, player: playerW, system: systemW, cat: catW })[modelData.id] ?? null
+                                    battery: batteryW, buds: budsW, player: playerW, system: systemW, cat: catW, cava: cavaW })[modelData.id] ?? null
             }
         }
 
@@ -201,6 +212,7 @@ PanelWindow {
                         topPadding: 10
                         elide: Text.ElideRight
                         text: root.player?.trackTitle || "Nothing on"
+                        textFormat: Text.PlainText
                         font { family: Theme.ui; pixelSize: 26; weight: Font.DemiBold }
                         color: Theme.fg
                     }
@@ -208,6 +220,7 @@ PanelWindow {
                         width: parent.width
                         elide: Text.ElideRight
                         text: root.player?.trackArtist ?? ""
+                        textFormat: Text.PlainText
                         font { family: Theme.ui; pixelSize: 15 }
                         color: Theme.grey
                     }
@@ -224,6 +237,7 @@ PanelWindow {
             id: budsW
             W {
                 round: true
+                Notch { onNotch: d => Sys.setVol(Sys.vol + d * 0.05) } // колесо — громкость, и при наушниках: их заряд колесом не крутят
                 Ring { anchors { fill: parent; margins: 12 } f: root.buds ? root.buds.battery : Sys.vol }
                 Column {
                     anchors.centerIn: parent
@@ -241,32 +255,41 @@ PanelWindow {
             }
         }
 
-        // кот: гифка матрицей в тон темы через шейдер обоев (как Wall в look 0). Танцует, только пока дом виден
+        // кот: гифка матрицей в тон темы через шейдер обоев (как Wall в look 0), какая — services/Gifs, сама плитка — Gif.
+        // Танцует, только пока дом виден
         Component {
             id: catW
             W {
                 id: cw
-                AnimatedImage { id: cat; anchors.fill: fx; opacity: 0; source: "cat.gif"; playing: root.home } // текстура для fx, см. Wall
-                ShaderEffect {
-                    id: fx
-                    anchors { fill: parent; margins: 12 }
-                    readonly property size size: Qt.size(width, height)
-                    readonly property point origin: Qt.point(0, 0)
-                    readonly property size cropA: Qt.size(1, 1)
-                    readonly property size cropB: cropA
-                    readonly property color lo: Theme.light ? Theme.fg : Theme.bg
-                    readonly property color hi: Theme.light ? Theme.bg : Theme.fg
-                    readonly property color bg: cw.color // прозрачное в гифке — в цвет плитки
-                    readonly property real pitch: 6
-                    readonly property real dots: 1
-                    readonly property real mono: 1
-                    readonly property real bright: 1
-                    readonly property real wave: 0
-                    readonly property real hasA: cat.status === Image.Ready ? 1 : 0
-                    readonly property real hasB: 0
-                    readonly property var srcA: cat
-                    readonly property var srcB: cat
-                    fragmentShader: Qt.resolvedUrl("../components/shaders/wall.frag.qsb")
+                Gif { anchors.fill: parent; playing: root.home; bg: cw.color }
+            }
+        }
+
+        // cava матрицей в круге, как Glyph Matrix на спинке Nothing Phone (3): бас в центре, к краям верхи, столбики растут
+        // от середины вверх и вниз. Тишина — погасшие точки. cava работает, только пока дом виден
+        Component {
+            id: cavaW
+            W {
+                round: true
+                Grid {
+                    anchors.centerIn: parent
+                    columns: 15
+                    spacing: 4
+                    Repeater {
+                        model: 15 * 15
+                        Rectangle {
+                            required property int index
+                            readonly property int cx: index % 15 - 7
+                            readonly property int cy: Math.floor(index / 15) - 7
+                            readonly property int half: Math.floor(Math.sqrt(7.5 * 7.5 - cx * cx)) // полвысоты столбца внутри круга
+                            readonly property real v: Cava.bars[Math.abs(cx)] ?? 0
+                            width: 8
+                            height: 8
+                            radius: 4
+                            // вне круга — прозрачная, не visible: Grid сдвинул бы остальные
+                            color: Math.abs(cy) > half ? "transparent" : Math.abs(cy) < v * (half + 1) ? Theme.fg : Theme.s3
+                        }
+                    }
                 }
             }
         }
@@ -324,7 +347,7 @@ PanelWindow {
         property bool round
         width: span * 220 + (span - 1) * 20
         height: 220
-        radius: round ? 110 : 40
+        radius: round ? 110 : Theme.corner(40)
         color: Theme.s1
         border { width: 1; color: Theme.s2 }
     }

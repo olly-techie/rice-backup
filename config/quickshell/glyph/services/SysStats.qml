@@ -4,12 +4,14 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// система из /proc и sysfs раз в 2 с, пока открыт алтарь (detailed); perf — вкладка Performance: ещё процессы и частота
+// система из /proc и sysfs раз в 2 с, пока открыт алтарь (detailed); perf — вкладка Performance: ещё процессы и частота;
+// cat — в трее бара бежит кот (RunCat): ему cpu, тот же шаг, но без detailed — только /proc/stat, meminfo и uptime
 Singleton {
     id: root
 
     property bool detailed: false
     property bool perf: false
+    property bool cat: false
 
     property real cpu: 0          // 0…1
     property var cores: []        // 0…1 по ядрам
@@ -49,6 +51,7 @@ Singleton {
     // (amdgpu), её vram и её hwmon. Температура cpu — первый из известных датчиков. Ничего не нашлось — нули
     property string gpuType: ""   // "nvidia" | "drm" | ""
     property string card: ""      // /sys/class/drm/cardN/device
+    property string gpuDev: ""    // pci-устройство карты в sysfs: power/runtime_status — спит ли
     property string gpuHwmon: ""
     property var hwmons: ({})     // hwmonN по имени датчика
     function hwmon(names) { const n = names.find(n => root.hwmons[n]); return n ? root.hwmons[n] + "/temp1_input" : ""; }
@@ -58,11 +61,12 @@ Singleton {
     FileView { id: vramTotalF; path: root.card ? root.card + "/mem_info_vram_total" : ""; blockAllReads: true; printErrors: false }
     FileView { id: gpuTempF; path: root.gpuHwmon ? root.gpuHwmon + "/temp1_input" : ""; blockAllReads: true; printErrors: false }
     FileView { id: cpuTempF; path: root.hwmon(["k10temp", "coretemp", "zenpower", "cpu_thermal"]); blockAllReads: true; printErrors: false }
+    FileView { id: gpuPm; path: root.gpuDev ? root.gpuDev + "/power/runtime_status" : ""; blockAllReads: true; printErrors: false }
 
     Process {
         running: true
         command: ["sh", "-c", `for h in /sys/class/hwmon/hwmon*; do echo "hwmon $(cat $h/name) $h"; done
-command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1 && echo nvidia
+command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1 && echo "nvidia $(ls -d /sys/bus/pci/drivers/nvidia/*:* 2>/dev/null | head -1)"
 for c in /sys/class/drm/card*/device; do [ -e "$c/gpu_busy_percent" ] && { echo "card $c $(ls -d $c/hwmon/hwmon* 2>/dev/null | head -1)"; break; }; done`]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -70,8 +74,8 @@ for c in /sys/class/drm/card*/device; do [ -e "$c/gpu_busy_percent" ] && { echo 
                 for (const l of text.trim().split("\n")) {
                     const [k, a, b] = l.split(" ");
                     if (k === "hwmon") m[a] = b;
-                    else if (k === "nvidia") root.gpuType = "nvidia";
-                    else if (k === "card" && root.gpuType !== "nvidia") { root.gpuType = "drm"; root.card = a; root.gpuHwmon = b ?? ""; }
+                    else if (k === "nvidia") { root.gpuType = "nvidia"; root.gpuDev = a ?? ""; }
+                    else if (k === "card" && root.gpuType !== "nvidia") { root.gpuType = "drm"; root.card = root.gpuDev = a; root.gpuHwmon = b ?? ""; }
                 }
                 root.hwmons = m;
             }
@@ -122,7 +126,7 @@ for c in /sys/class/drm/card*/device; do [ -e "$c/gpu_busy_percent" ] && { echo 
 
     Timer {
         interval: 2000
-        running: root.detailed
+        running: root.detailed || root.cat
         repeat: true
         triggeredOnStart: true
         onTriggered: root.sample()
@@ -159,7 +163,10 @@ for c in /sys/class/drm/card*/device; do [ -e "$c/gpu_busy_percent" ] && { echo 
 
         root.load = root.read(loadavg).split(" ").slice(0, 3).join(" ");
         root.cpuTemp = root.num(cpuTempF) / 1000;
-        if (root.gpuType === "nvidia") nvidia.running = true;
+        // спящую дискретку гибридного ноутбука опрос будит, и с опросом раз в 2 с она уже не засыпает (nvidia-smi — точно).
+        // Спит — значит, простаивает: 0, карту не трогаем
+        if (root.read(gpuPm).startsWith("suspend")) { root.gpu = 0; root.gpuTemp = 0; }
+        else if (root.gpuType === "nvidia") nvidia.running = true;
         else {
             root.gpu = root.num(gpuBusy) / 100;
             root.gpuTemp = root.num(gpuTempF) / 1000;

@@ -77,7 +77,7 @@ PanelWindow {
                 width: 470
                 height: col.height + 44
                 opacity: root.t
-                radius: 36
+                radius: Theme.corner(36)
                 color: Theme.s1
                 border { width: 1; color: Theme.s2 }
                 focus: true
@@ -154,7 +154,7 @@ PanelWindow {
                             id: anc
                             width: parent.width
                             height: 54
-                            radius: 27
+                            radius: Theme.corner(27)
                             color: Theme.s2
                             readonly property real cell: (width - 12) / Sys.ancModes.length
                             readonly property int at: Sys.ancModes.findIndex(m => m[0] === Sys.ear?.mode)
@@ -196,7 +196,7 @@ PanelWindow {
                         Tile { icon: on ? "\u{F036C}" : "\u{F036D}"; name: "mic"; on: Sys.micOn; onClicked: Sys.toggleMic() }
                         Tile { icon: "\u{F044A}"; name: "record"; on: Sys.rec; picked: root.pick === "rec"; onClicked: { root.close(); Sys.toggleRec(); } onMenu: root.pick = picked ? "" : "rec" }
                         Tile { icon: "\u{F0483}"; name: "vpn"; on: Sys.vpn; onClicked: Sys.toggleVpn() }
-                        Tile { icon: "\u{F050E}"; name: "dark"; on: !Theme.light; onClicked: Theme.state.light = !Theme.state.light }
+                        Tile { icon: "\u{F050E}"; name: "dark"; on: !Theme.light; onClicked: Theme.setLight(!Theme.light) }
                     }
 
                     Rec { width: parent.width; visible: root.pick === "rec"; onTouched: root.pin(); onStart: { root.close(); Sys.toggleRec(); } }
@@ -206,54 +206,70 @@ PanelWindow {
 
                     // режим питания, как в caelestia: четыре клетки, белая заливка переезжает к выбранной; засечки — сила.
                     // ultra — ещё 60 Гц и без анимаций, blur и теней (Rules.modes)
-                    Rectangle {
-                        id: modes
+                    // справа — игровой режим, как в caelestia (Rules.store.game): без анимаций, blur, теней и зазоров, tearing
+                    Row {
                         width: parent.width
-                        height: 54
-                        radius: 27
-                        color: Theme.s2
-                        readonly property real cell: (width - 12) / Rules.modeCount
+                        spacing: 12
                         Rectangle {
-                            x: 6 + modes.cell * Rules.mode
-                            y: 6
-                            width: modes.cell
-                            height: parent.height - 12
-                            radius: height / 2
-                            color: Theme.fg
-                            Behavior on x { NumberAnimation { duration: Theme.t; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.glide } }
-                        }
-                        Repeater {
-                            model: Rules.modeCount
-                            Item {
-                                id: mc
-                                required property int index
-                                readonly property bool on: Rules.mode === index
-                                x: 6 + modes.cell * index
+                            id: modes
+                            width: parent.width - game.width - 12
+                            height: 54
+                            radius: Theme.corner(27)
+                            color: Theme.s2
+                            readonly property real cell: (width - 12) / Rules.modeCount
+                            Rectangle {
+                                x: 6 + modes.cell * Rules.mode
+                                y: 6
                                 width: modes.cell
-                                height: modes.height
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: 10
+                                height: parent.height - 12
+                                radius: height / 2
+                                color: Theme.fg
+                                Behavior on x { NumberAnimation { duration: Theme.t; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.glide } }
+                            }
+                            Repeater {
+                                model: Rules.modeCount
+                                Item {
+                                    id: mc
+                                    required property int index
+                                    readonly property bool on: Rules.mode === index
+                                    x: 6 + modes.cell * index
+                                    width: modes.cell
+                                    height: modes.height
                                     Row {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        spacing: 3
-                                        Repeater {
-                                            model: 4
-                                            Rectangle {
-                                                required property int index
-                                                anchors.bottom: parent.bottom
-                                                width: 4
-                                                height: 6 + index * 4
-                                                radius: 2
-                                                color: index <= mc.index ? (mc.on ? Theme.ink : Theme.fg) : (mc.on ? Theme.mute : Theme.s3)
+                                        anchors.centerIn: parent
+                                        spacing: 10
+                                        Row {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            spacing: 3
+                                            Repeater {
+                                                model: 4
+                                                Rectangle {
+                                                    required property int index
+                                                    anchors.bottom: parent.bottom
+                                                    width: 4
+                                                    height: 6 + index * 4
+                                                    radius: 2
+                                                    color: index <= mc.index ? (mc.on ? Theme.ink : Theme.fg) : (mc.on ? Theme.mute : Theme.s3)
+                                                }
                                             }
                                         }
+                                        Lb { anchors.verticalCenter: parent.verticalCenter; text: Rules.modes[mc.index].short; color: mc.on ? Theme.ink : Theme.grey }
                                     }
-                                    Lb { anchors.verticalCenter: parent.verticalCenter; text: Rules.modes[mc.index].short; color: mc.on ? Theme.ink : Theme.grey }
+                                    TapHandler { onTapped: { root.pin(); Rules.setMode(mc.index); } }
+                                    HoverHandler { cursorShape: Qt.PointingHandCursor }
                                 }
-                                TapHandler { onTapped: { root.pin(); Rules.setMode(mc.index); } }
-                                HoverHandler { cursorShape: Qt.PointingHandCursor }
                             }
+                        }
+                        Rectangle {
+                            id: game
+                            width: 54
+                            height: 54
+                            radius: 27
+                            color: Rules.store.game ? Theme.fg : Theme.s2
+                            Behavior on color { ColorAnimation { duration: Theme.t } }
+                            Icon { anchors.centerIn: parent; text: "\u{F0297}"; font.pixelSize: 22; color: Rules.store.game ? Theme.ink : Theme.fg }
+                            TapHandler { onTapped: { root.pin(); Rules.store.game = !Rules.store.game; } }
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                         }
                     }
 
@@ -262,13 +278,13 @@ PanelWindow {
                         visible: !!Media.player
                         width: parent.width
                         height: 86
-                        radius: 30
+                        radius: Theme.corner(30)
                         color: Theme.s2
                         Art { id: mart; x: 12; anchors.verticalCenter: parent.verticalCenter; width: 62; height: 62; step: 4; url: Media.player?.trackArtUrl ?? "" }
                         Column {
                             anchors { left: mart.right; leftMargin: 16; right: mctl.left; rightMargin: 16; verticalCenter: parent.verticalCenter }
-                            Text { width: parent.width; elide: Text.ElideRight; text: Media.player?.trackTitle || "Nothing on"; font { family: Theme.ui; pixelSize: 16; weight: Font.DemiBold } color: Theme.fg }
-                            Text { width: parent.width; elide: Text.ElideRight; text: Media.player?.trackArtist ?? ""; font { family: Theme.ui; pixelSize: 13 } color: Theme.grey }
+                            Text { textFormat: Text.PlainText; width: parent.width; elide: Text.ElideRight; text: Media.player?.trackTitle || "Nothing on"; font { family: Theme.ui; pixelSize: 16; weight: Font.DemiBold } color: Theme.fg }
+                            Text { textFormat: Text.PlainText; width: parent.width; elide: Text.ElideRight; text: Media.player?.trackArtist ?? ""; font { family: Theme.ui; pixelSize: 13 } color: Theme.grey }
                         }
                         Controls { id: mctl; anchors { right: parent.right; rightMargin: 18; verticalCenter: parent.verticalCenter } size: 20; play: 44 }
                     }
@@ -291,7 +307,10 @@ PanelWindow {
                     ListView {
                         id: notes
                         width: parent.width
-                        height: Math.min(contentHeight, stage.height - 28 - 44 - y)
+                        height: Math.min(shown, stage.height - 28 - 44 - y)
+                        // плавно — по контенту (clear all, dismiss); потолок сразу: Picker или плеер выше не выталкивают шапку за экран
+                        property real shown: contentHeight
+                        Behavior on shown { enabled: Rules.moving; NumberAnimation { duration: Theme.t; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.glide } }
                         clip: true
                         spacing: 10
                         model: Notes.list.slice().reverse()
@@ -302,7 +321,7 @@ PanelWindow {
                             readonly property var n: modelData
                             width: notes.width
                             height: body.height + 32
-                            radius: 26
+                            radius: Theme.corner(26)
                             color: Theme.s2
                             border { width: n.urgency === NotificationUrgency.Critical ? 1 : 0; color: Theme.red }
 
@@ -332,7 +351,7 @@ PanelWindow {
                                 y: 16
                                 width: parent.width - x - 18
                                 Lb { width: parent.width; elide: Text.ElideRight; text: `${n.appName || "app"} · ${Notes.ago(n, clock.date.getTime())}`; px: 11 }
-                                Text { width: parent.width; elide: Text.ElideRight; text: n.summary; font { family: Theme.ui; pixelSize: 15; weight: Font.DemiBold } color: Theme.fg }
+                                Text { textFormat: Text.PlainText; width: parent.width; elide: Text.ElideRight; text: n.summary; font { family: Theme.ui; pixelSize: 15; weight: Font.DemiBold } color: Theme.fg }
                                 Text {
                                     width: parent.width
                                     visible: !!n.body
@@ -393,7 +412,7 @@ PanelWindow {
         signal clicked
         width: (col.width - 12) / 2
         height: 76
-        radius: 38
+        radius: Theme.corner(38)
         color: on ? Theme.fg : Theme.s2
         Behavior on color { ColorAnimation { duration: Theme.t } }
         Rectangle {
@@ -412,6 +431,7 @@ PanelWindow {
             Text {
                 width: parent.width
                 elide: Text.ElideRight
+                textFormat: Text.PlainText
                 text: pill.sub
                 font { family: Theme.mono; pixelSize: 11; letterSpacing: 0.9; capitalization: Font.AllUppercase }
                 color: pill.on ? Theme.ink : Theme.fg
@@ -464,7 +484,7 @@ PanelWindow {
         readonly property real shown: area.pressed ? area.v : value
         width: col.width
         height: 54
-        radius: 27
+        radius: Theme.corner(27)
         color: Theme.s2
         // пустая часть — точки шагом 11. Не svg-плиткой: она растрируется в 11px и мылится масштабом холста
         Row {
@@ -479,7 +499,7 @@ PanelWindow {
         Rectangle {
             width: Math.max(height, sl.width * sl.shown)
             height: parent.height
-            radius: 27
+            radius: Theme.corner(27)
             color: Theme.fg
             Icon { x: 18; anchors.verticalCenter: parent.verticalCenter; text: sl.icon; font.pixelSize: 21; color: Theme.ink }
         }
@@ -487,18 +507,33 @@ PanelWindow {
             anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
             width: val.width + 16
             height: val.height + 8
-            radius: 10
+            radius: Theme.corner(10)
             color: Theme.s2
             Lb { id: val; anchors.centerIn: parent; text: Math.round(sl.shown * 100) }
         }
         MouseArea {
             id: area
             property real v
+            property real wacc: 0
             anchors.fill: parent
             preventStealing: true
             function set(x) { v = Math.max(0, Math.min(1, x / width)); sl.moved(v); }
-            onPressed: e => { root.pin(); set(e.x); }
+            // pin на отпускании: в панели, открытой наведением, он отдаёт ей клавиатуру (None → Exclusive), и Hyprland на это
+            // отпускает все кнопки мыши — первый drag после peek доезжал до точки клика и обрывался
+            onPressed: e => set(e.x)
             onPositionChanged: e => set(e.x)
+            onReleased: root.pin()
+            // колесо: засечка — 5 %, тачпад (у него фаза жеста, у колеса нет) вчетверо медленнее, иначе свайп — полшкалы.
+            // Копим до 2 %: мелкие шаги тачпада съедает округление подсветки, и каждый пускал бы brightnessctl.
+            // Без pin: прокрутка — не клик, панель с края закрывается сама и клавиатуру не берёт. Направление — пальцев,
+            // как у Slider в Qt: natural scroll (inverted) не разворачивает, вправо и от себя — больше
+            onWheel: e => {
+                wacc += (e.inverted ? -1 : 1) * (e.angleDelta.y || -e.angleDelta.x) / 120 * 0.05 * (e.phase === Qt.NoScrollPhase ? 1 : 0.25);
+                if (Math.abs(wacc) < 0.02)
+                    return;
+                sl.moved(Math.max(0, Math.min(1, sl.shown + wacc)));
+                wacc = 0;
+            }
         }
     }
 }

@@ -94,7 +94,9 @@ hl.bind("CTRL + ALT + Tab", hl.dsp.group.next(), { repeating = true })
 hl.bind("CTRL + SHIFT + ALT + Tab", hl.dsp.group.prev(), { repeating = true })
 hl.bind(vars.kbToggleGroup, hl.dsp.group.toggle())
 hl.bind(vars.kbUngroup, hl.dsp.window.move({ out_of_group = true }))
-hl.bind("SUPER + SHIFT + Comma", hl.dsp.group.lock())
+-- group.lock() only took over lock_active()'s meaning in 0.57; on 0.56 lock() is the all-groups lock
+local kbLockGroup = hl.version():match("^0%.5[0-6]%.") and hl.dsp.group.lock_active() or hl.dsp.group.lock()
+hl.bind("SUPER + SHIFT + Comma", kbLockGroup)
 
 -- Window actions
 hl.bind("SUPER + left", hl.dsp.focus({ direction = "left" }))
@@ -141,15 +143,15 @@ hl.bind(vars.kbCloseWindow, hl.dsp.window.close())
 
 -- Special workspace toggles
 hl.bind(vars.kbSpecialWs, fn.toggle_special("special"))
-hl.bind(vars.kbSystemMonitorWs, fn.toggle_special("sysmon", "ghostty --class=btop -e btop"))
-hl.bind(vars.kbMusicWs, fn.toggle_special("music", "spicetify watch -s"))
-hl.bind(vars.kbCommunicationWs, fn.toggle_special("communication", "Telegram"))
-hl.bind(vars.kbTodoWs, fn.toggle_special("todo", "flatpak run io.github.alainm23.planify"))
+hl.bind(vars.kbSystemMonitorWs, fn.toggle_special("sysmon"))
+hl.bind(vars.kbMusicWs, fn.toggle_special("music"))
+hl.bind(vars.kbCommunicationWs, fn.toggle_special("communication"))
+hl.bind(vars.kbTodoWs, fn.toggle_special("todo"))
 
 -- Apps
-hl.bind(vars.kbTerminal, hl.dsp.exec_cmd(vars.terminal))
+hl.bind(vars.kbTerminal, function() hl.exec_cmd(vars.terminal) end) -- при нажатии: user.lua может сменить vars.terminal
 hl.bind(vars.kbBrowser, hl.dsp.exec_cmd(vars.browser))
-hl.bind(vars.kbEditor, hl.dsp.exec_cmd(vars.editor))
+hl.bind(vars.kbEditor, function() if vars.apps.editor then hl.exec_cmd(vars.apps.editor) end end)
 hl.bind(vars.kbFileExplorer, hl.dsp.exec_cmd(vars.fileExplorer))
 hl.bind("CTRL + ALT + V", hl.dsp.exec_cmd(vars.audioSettings))
 
@@ -189,8 +191,8 @@ hl.bind("SUPER + V", hl.dsp.global("shell:clip"))
 hl.bind("SUPER + Period", hl.dsp.global("shell:charms"))
 hl.bind(
     "CTRL + SHIFT + ALT + V",
-    hl.dsp.exec_cmd('sleep 0.5s && ydotool type -d 1 "$(cliphist list | head -1 | cliphist decode)"'),
-    { locked = true }
+    hl.dsp.exec_cmd('sleep 0.5s && ydotool type -d 1 "$(cliphist list | head -1 | cliphist decode)"')
+    -- без locked: на блокировке он набрал бы последнее скопированное в поле пароля любому, кто сел за ноутбук
 )
 
 -- Testing

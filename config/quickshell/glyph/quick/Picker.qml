@@ -59,7 +59,7 @@ Rectangle {
 
     visible: kind === "wifi" || kind === "bt"
     height: list.height + 32
-    radius: 30
+    radius: Theme.corner(30)
     color: Theme.s2
 
     Column {
@@ -101,7 +101,7 @@ Rectangle {
                 readonly property bool busy: root.isWifi ? o.stateChanging : o.pairing || o.state === BluetoothDeviceState.Connecting || o.state === BluetoothDeviceState.Disconnecting
                 width: list.width
                 height: 56
-                radius: 28
+                radius: Theme.corner(28)
                 color: hov.hovered ? Theme.s3 : "transparent"
 
                 Rectangle {
@@ -129,7 +129,7 @@ Rectangle {
                 }
                 Column {
                     anchors { left: ic.right; leftMargin: 14; right: parent.right; rightMargin: 16; verticalCenter: parent.verticalCenter }
-                    Text { width: parent.width; elide: Text.ElideRight; text: row.o.name || row.o.address; font { family: Theme.ui; pixelSize: 15; weight: Font.DemiBold } color: Theme.fg }
+                    Text { textFormat: Text.PlainText; width: parent.width; elide: Text.ElideRight; text: row.o.name || row.o.address; font { family: Theme.ui; pixelSize: 15; weight: Font.DemiBold } color: Theme.fg }
                     Lb {
                         px: 10
                         text: root.isWifi
@@ -158,7 +158,7 @@ Rectangle {
             visible: !!root.ask
             width: list.width
             height: 56
-            radius: 28
+            radius: Theme.corner(28)
             color: Theme.s1
             border { width: 1; color: Theme.s3 }
             onVisibleChanged: if (visible) pw.forceActiveFocus()

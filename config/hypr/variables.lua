@@ -22,9 +22,18 @@ return {
     -- Apps
     terminal                   = "ghostty",
     browser                    = "zen-browser",
-    editor                     = "codium",
     fileExplorer               = "nautilus",
     audioSettings              = "pavucontrol",
+    -- программы спец-воркспейсов (запускаются, если там пусто) и редактор. Бинды читают их при нажатии,
+    -- так что свои — в user.lua: require("variables").apps.editor = "codium". Не установлено — откроется пустой
+    -- воркспейс. telegram и spotify ставит install.sh --with
+    apps                       = {
+        sysmon        = "ghostty --class=btop -e btop",
+        music         = "spicetify watch -s",
+        communication = "Telegram",
+        todo          = "flatpak run io.github.alainm23.planify",
+        editor        = "codium",
+    },
 
     -- Touchpad
     touchpadDisableTyping      = false,
@@ -53,7 +62,6 @@ return {
     workspaceGaps              = 15,
     windowGapsIn               = 6,
     windowGapsOut              = 14,
-    singleWindowGapsOut        = 14,
 
     -- Window styling
     windowOpacity              = 1,
