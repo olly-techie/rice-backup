@@ -82,7 +82,7 @@ Singleton {
             property int wallLook: 0       // 0 точки, 1 серое фото, 2 цвет
             property int wallPitch: 10     // шаг точек, px
             property int wallBright: 85    // %, от фона до картинки
-            property int rounding: 20      // окна hypr
+            property int rounding: 0      // окна hypr
             property bool edges: true      // Glyph-полосы по краям (громкость/яркость, вспышки, прогресс)
             property int briSteps: 20      // яркость с клавиш: делений на шкалу, 40/20/10 — шаг 2.5/5/10 %
             property bool quickHover: true // быстрые настройки по наведению на правый край

@@ -2,8 +2,8 @@ local vars = require("variables")
 
 hl.config({
     input = {
-        kb_layout          = "us,ru",
-        kb_options         = "grp:alt_shift_toggle",
+        kb_layout          = "es",
+        kb_options         = "",
         numlock_by_default = false,
         repeat_delay       = 250,
         repeat_rate        = 35,
@@ -23,4 +23,15 @@ hl.config({
     cursor = {
         hotspot_padding = 1,
     },
+})
+
+-- pointer speed: sensitivity -1..1, 0 = default
+hl.device({
+    name        = "ps/2-generic-mouse",
+    sensitivity = 0.7,
+})
+
+hl.device({
+    name        = "synps/2-synaptics-touchpad",
+    sensitivity = 0.5,
 })

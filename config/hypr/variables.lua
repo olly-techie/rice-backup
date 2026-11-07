@@ -20,10 +20,10 @@ return {
     lockCmd                    = rice .. " lock", -- лок текущего шелла; второй не запускает
 
     -- Apps
-    terminal                   = "kitty -1", -- single-instance: новые окна из живого процесса, ~40 мс вместо ~400
+    terminal                   = "ghostty",
     browser                    = "zen-browser",
     editor                     = "codium",
-    fileExplorer               = "thunar",
+    fileExplorer               = "nautilus",
     audioSettings              = "pavucontrol",
 
     -- Touchpad
@@ -33,21 +33,21 @@ return {
     workspaceSwipeFingers      = 3,
     gestureFingersMore         = 5,
 
-    -- Blur
+    -- Blur (reduced for iGPU performance)
     blurEnabled                = true,
     blurSpecialWs              = false,
     blurPopups                 = true,
     blurInputMethods           = true,
-    blurSize                   = 8,
-    blurPasses                 = 2,
+    blurSize                   = 4,
+    blurPasses                 = 1,
     blurXray                   = false,
 
-    -- Shadow
+    -- Shadow (reduced for iGPU performance)
     -- лёгкое красное свечение у фокуса
     shadowEnabled              = true,
-    shadowRange                = 10,
-    shadowRenderPower          = 4,
-    shadowColour               = "rgba(" .. scheme.crimson .. "20)",
+    shadowRange                = 6,
+    shadowRenderPower          = 2,
+    shadowColour               = "rgba(" .. scheme.crimson .. "15)",
 
     -- Gaps
     workspaceGaps              = 15,
@@ -103,9 +103,9 @@ return {
     -- Special workspaces toggles
     kbSpecialWs                = "SUPER + S",
     kbSystemMonitorWs          = "CTRL + SHIFT + Escape",
-    kbMusicWs                  = "SUPER + M",
+    kbMusicWs                  = "CTRL + SUPER + M",
     kbCommunicationWs          = "SUPER + D",
-    kbTodoWs                   = "SUPER + R",
+    kbTodoWs                   = "CTRL + SUPER + R",
 
     -- Apps
     kbTerminal                 = "SUPER + Q",

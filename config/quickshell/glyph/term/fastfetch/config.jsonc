@@ -1,11 +1,10 @@
-// glyph: знак райса точками, ключи капсом серым, цвета — круглые точки. Цвета — номерами ANSI: kitty в светлой теме
+// glyph: встроенный логотип Fedora, ключи капсом серым, цвета — круглые точки. Цвета — номерами ANSI: kitty в светлой теме
 // меняет 0↔15 и 7↔8, и белое на белом не теряется. ~/.config/fastfetch ссылается сюда, пока жив glyph (rice)
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
     "logo": {
-        "type": "file",
-        "source": "~/.config/fastfetch/logo.txt",
-        "color": { "1": "97", "2": "31" },
+        "type": "builtin",
+        "source": "Fedora",
         "padding": { "top": 1, "left": 2, "right": 6 }
     },
     "display": {
@@ -20,7 +19,7 @@
         { "type": "os", "key": "OS        " },
         { "type": "kernel", "key": "KERNEL    ", "format": "{release}" },
         { "type": "wm", "key": "WM        ", "format": "{pretty-name}" },
-        { "type": "command", "key": "SHELL     ", "text": "echo quickshell · glyph" },
+        { "type": "shell", "key": "SHELL     " },
         { "type": "terminal", "key": "TERM      ", "format": "{pretty-name}" },
         { "type": "terminalfont", "key": "FONT      " },
         { "type": "uptime", "key": "UPTIME    " },

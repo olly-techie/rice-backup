@@ -25,7 +25,7 @@ term() {
     g=org.gnome.desktop.interface
     t=$(gsettings get $g gtk-theme)
     gsettings set $g gtk-theme Adwaita; gsettings set $g gtk-theme "$t"
-    gsettings set $g icon-theme Papirus-Dark; gsettings set $g icon-theme Rice
+    gsettings set $g icon-theme WhiteSur-dark
 }
 
 # папки в цвет шелла (term/folders: grey, carmine… — цвета Papirus): тема значков Rice поверх Papirus-Dark, где folder-*/user-*
@@ -34,6 +34,7 @@ folders() {
     c=$(cat "$q/$1/term/folders" 2>/dev/null) || return 0
     d=${XDG_DATA_HOME:-$HOME/.local/share}/icons/Rice
     p=/usr/share/icons/Papirus-Dark
+    [ -d "$p" ] || return 0 # нет Papirus (например, значки WhiteSur) — цвет папок не перекрашиваем
     [ "$(cat "$d/color" 2>/dev/null)" = "$c" ] && return 0
     rm -rf "$d"
     dirs=; secs=

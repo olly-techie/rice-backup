@@ -94,7 +94,7 @@ hl.bind("CTRL + ALT + Tab", hl.dsp.group.next(), { repeating = true })
 hl.bind("CTRL + SHIFT + ALT + Tab", hl.dsp.group.prev(), { repeating = true })
 hl.bind(vars.kbToggleGroup, hl.dsp.group.toggle())
 hl.bind(vars.kbUngroup, hl.dsp.window.move({ out_of_group = true }))
-hl.bind("SUPER + SHIFT + Comma", hl.dsp.group.lock_active())
+hl.bind("SUPER + SHIFT + Comma", hl.dsp.group.lock())
 
 -- Window actions
 hl.bind("SUPER + left", hl.dsp.focus({ direction = "left" }))
@@ -141,7 +141,7 @@ hl.bind(vars.kbCloseWindow, hl.dsp.window.close())
 
 -- Special workspace toggles
 hl.bind(vars.kbSpecialWs, fn.toggle_special("special"))
-hl.bind(vars.kbSystemMonitorWs, fn.toggle_special("sysmon", "kitty --class btop -T btop btop"))
+hl.bind(vars.kbSystemMonitorWs, fn.toggle_special("sysmon", "ghostty --class=btop -e btop"))
 hl.bind(vars.kbMusicWs, fn.toggle_special("music", "spicetify watch -s"))
 hl.bind(vars.kbCommunicationWs, fn.toggle_special("communication", "Telegram"))
 hl.bind(vars.kbTodoWs, fn.toggle_special("todo", "flatpak run io.github.alainm23.planify"))
