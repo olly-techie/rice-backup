@@ -1,0 +1,59 @@
+{
+    "bar": [
+        "layout",
+        "wifi",
+        "bluetooth",
+        "sound",
+        "notes",
+        "battery",
+        "mode",
+        "power"
+    ],
+    "barAt": "left",
+    "barTitle": true,
+    "blink": false,
+    "briSteps": 20,
+    "clock24": false,
+    "corners": 100,
+    "deck": [
+        "net",
+        "perf",
+        "media"
+    ],
+    "deckHover": true,
+    "dnd": false,
+    "edges": true,
+    "gif": "",
+    "gifDir": "",
+    "grid": false,
+    "light": false,
+    "name": "",
+    "orb": true,
+    "paint": "",
+    "paintAt": 0,
+    "quickHover": true,
+    "recArea": 0,
+    "recAudio": 0,
+    "recCursor": true,
+    "recFps": 60,
+    "recQuality": 2,
+    "rounding": 6,
+    "scheme": "rosepine-moon",
+    "screens": {
+    },
+    "tones": [
+        "#56809f"
+    ],
+    "unread": 0,
+    "variant": "monochrome",
+    "vpnPortal": false,
+    "wall": "/home/olly/Pictures/wallpapers/wallhaven-w5wq8p.jpg",
+    "wallBright": 45,
+    "wallDir": "/home/olly/Pictures/wallpapers",
+    "wallLook": 2,
+    "wallPitch": 6,
+    "widgets": [
+        "system",
+        "disk"
+    ]
+}
