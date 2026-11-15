@@ -21,7 +21,7 @@ return {
 
     -- Apps
     terminal                   = "ghostty",
-    browser                    = "zen-browser",
+    browser                    = "flatpak run com.brave.Browser",
     fileExplorer               = "nautilus",
     audioSettings              = "pavucontrol",
     -- программы спец-воркспейсов (запускаются, если там пусто) и редактор. Бинды читают их при нажатии,
