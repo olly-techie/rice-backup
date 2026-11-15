@@ -28,7 +28,7 @@ PanelWindow {
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.namespace: "glyph-cal"
 
-    SystemClock { id: clock; precision: SystemClock.Hours }
+    SysClock { id: clock; precision: SysClock.Hours }
     readonly property var en: Qt.locale("en_US")
     readonly property var month: new Date(clock.date.getFullYear(), clock.date.getMonth() + shift, 1)
     readonly property int lead: (month.getDay() + 6) % 7 // дней прошлого месяца до понедельника

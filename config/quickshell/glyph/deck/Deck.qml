@@ -22,7 +22,7 @@ Scope {
     Binding { target: Sys; property: "deckOpen"; value: root.on !== null }
     Binding { target: SysStats; property: "perf"; value: root.on !== null }
 
-    SystemClock { id: clock; precision: SystemClock.Minutes }
+    SysClock { id: clock; precision: SysClock.Minutes }
     readonly property var en: Qt.locale("en_US")
     function hm(d) { return Qt.formatTime(d, Theme.state.clock24 ? "hh:mm" : "h:mm ap"); }
     function week(d) { // ISO-неделя, как в Home

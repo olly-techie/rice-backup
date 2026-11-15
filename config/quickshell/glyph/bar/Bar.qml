@@ -25,7 +25,7 @@ PanelWindow {
 
     readonly property bool vert: Theme.state.barAt !== "top" // всё, кроме top (и неизвестное), — слева
     anchors { left: true; right: !vert; top: true; bottom: vert }
-    implicitWidth: Math.ceil(78 * Theme.s)  // сбоку
+    implicitWidth: Math.ceil((vert ? 64 : 78) * Theme.s)  // сбоку
     implicitHeight: Math.ceil(78 * Theme.s) // сверху
     color: "transparent"
     WlrLayershell.namespace: "glyph-bar"
@@ -40,12 +40,12 @@ PanelWindow {
     // hyprland 0.56 с lua: dispatch принимает lua-выражение
     function go(ws) { Hyprland.dispatch(`hl.dsp.focus({ workspace = "${ws}" })`); }
 
-    SystemClock { id: clock; precision: SystemClock.Minutes }
+    SysClock { id: clock; precision: SysClock.Minutes }
 
     Stage {
         Rectangle {
             id: pill
-            x: 14 // от краёв экрана
+            x: root.vert ? 0 : 14 // от краёв экрана
             y: 14
             width: root.vert ? 64 : parent.width - 28
             height: root.vert ? parent.height - 28 : 64
@@ -325,7 +325,7 @@ PanelWindow {
         visible: t > 0
         // от внутреннего края пилюли бара с зазором 14; сбоку растёт вверх от popAt, сверху — вниз и влево
         anchor.item: pill
-        anchor.rect: root.vert ? Qt.rect(pill.width + 14, root.popAt.y, 1, 1) : Qt.rect(root.popAt.x, pill.height + 14, 1, 1)
+        anchor.rect: root.vert ? Qt.rect(pill.width, root.popAt.y, 1, 1) : Qt.rect(root.popAt.x, pill.height + 14, 1, 1)
         anchor.edges: Edges.Top | Edges.Left
         anchor.gravity: root.vert ? Edges.Top | Edges.Right : Edges.Bottom | Edges.Left
         implicitWidth: Math.ceil(440 * Theme.s)

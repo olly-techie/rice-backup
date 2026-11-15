@@ -126,7 +126,7 @@ PanelWindow {
         });
     }
 
-    SystemClock { id: clock; enabled: root.visible; precision: SystemClock.Minutes }
+    SysClock { id: clock; enabled: root.visible; precision: SysClock.Minutes }
     readonly property string hello: { const h = clock.date.getHours(); return h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; }
     readonly property string who: (Theme.state.name || Quickshell.env("USER")).replace(/&/g, "&amp;").replace(/</g, "&lt;")
 

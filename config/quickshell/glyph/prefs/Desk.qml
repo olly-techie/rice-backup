@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell
 import qs
 import qs.components
 
@@ -27,7 +26,7 @@ Item {
     width: 1040
     height: 388
 
-    SystemClock { id: clock; enabled: root.visible; precision: SystemClock.Minutes }
+    SysClock { id: clock; enabled: root.visible; precision: SysClock.Minutes }
 
     Rectangle {
         width: 620

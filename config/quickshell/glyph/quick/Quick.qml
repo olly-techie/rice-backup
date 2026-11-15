@@ -51,7 +51,7 @@ PanelWindow {
     readonly property var net: wifi?.networks.values.find(n => n.connected) ?? null
     readonly property var bt: Bluetooth.defaultAdapter
     readonly property var btDev: Bluetooth.devices.values.find(d => d.connected) ?? null
-    SystemClock { id: clock; precision: SystemClock.Minutes }
+    SysClock { id: clock; precision: SysClock.Minutes }
 
     Rectangle {
         anchors.fill: parent

@@ -29,7 +29,7 @@ PanelWindow {
     Binding { target: SysStats; property: "detailed"; value: root.homes.length > 0 || Sys.deckOpen }
     Binding { target: Cava; property: "active"; value: root.homes.some(s => Theme.scr(s.name, "widgets").includes("cava")) }
 
-    SystemClock { id: clock; precision: SystemClock.Minutes }
+    SysClock { id: clock; precision: SysClock.Minutes }
     readonly property var en: Qt.locale("en_US")
 
     // мигающее двоеточие — два кадра в секунду, а не анимация на каждый vsync
