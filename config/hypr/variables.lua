@@ -76,7 +76,7 @@ return {
     -- Misc
     volumeStep                 = 5,
     volumeMax                  = 100,
-    cursorTheme                = "Bibata-Modern-Classic",
+    cursorTheme                = "McMojave-cursors",
     cursorSize                 = 23,
     sleepGestureCmd            = "systemctl suspend-then-hibernate || systemctl suspend", -- нет гибернации — обычный сон
 

@@ -11,7 +11,7 @@ hl.config({
     },
 })
 
-hl.gesture({ fingers = vars.workspaceSwipeFingers, direction = "vertical", action = "workspace" })
+-- 3-finger workspace gesture lives in user.lua (custom vertical swipe).
 hl.gesture({ fingers = vars.gestureFingers, direction = "up", action = "special", workspace_name = "special" })
 hl.gesture({
     fingers   = vars.gestureFingers,

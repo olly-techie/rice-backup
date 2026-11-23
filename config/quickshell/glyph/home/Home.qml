@@ -62,6 +62,15 @@ PanelWindow {
             Num { text: Theme.hh(clock.date); font.pixelSize: 300 }
             Num { text: ":"; font.pixelSize: 300; opacity: Theme.state.blink && root.dim ? 0.2 : 1 }
             Num { text: Qt.formatTime(clock.date, "mm"); font.pixelSize: 300 }
+            Num {
+                visible: !Theme.state.clock24
+                text: clock.date.getHours() < 12 ? "am" : "pm"
+                font.pixelSize: 60
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 46
+                leftPadding: 18
+                opacity: 0.7
+            }
         }
         Lb {
             x: 190
