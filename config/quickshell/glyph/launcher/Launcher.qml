@@ -260,6 +260,25 @@ PanelWindow {
                 contentHeight: body.height
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
+                // колесо: ~2 ряда за засечку (вместо дефолтного ~1). MouseArea ловит колесо и не
+                // пускает его дальше в Flickable; клики проходят насквозь (NoButton + propagate).
+                property real wheelAcc: 0
+                MouseArea {
+                    anchors.fill: parent
+                    z: 1
+                    acceptedButtons: Qt.NoButton
+                    propagateComposedEvents: true
+                    onWheel: e => {
+                        e.accepted = true
+                        const dy = (e.inverted ? -1 : 1) * (e.angleDelta.y || e.angleDelta.x);
+                        flick.wheelAcc += dy / 120 * 280;
+                        const step = Math.trunc(flick.wheelAcc);
+                        if (step) {
+                            flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height, flick.contentY + step));
+                            flick.wheelAcc -= step;
+                        }
+                    }
+                }
                 function ensure(y, h) {
                     if (y < contentY) contentY = Math.max(0, y);
                     else if (y + h > contentY + height) contentY = y + h - height;
@@ -389,8 +408,7 @@ PanelWindow {
                 sourceSize: Qt.size(44, 44)
                 asynchronous: true
                 retainWhileLoading: true // ячейке сменили приложение — старая иконка, пока грузится новая
-                layer.enabled: cell.near // слой рисует свой Image и скрытым
-                layer.effect: Dm { step: 2.5 }
+                layer.enabled: false // иконки приложений в настоящем цвете, без точечной маски
             }
             TapHandler { onTapped: { root.sel = cell.modelData.k; root.launch(); } }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
